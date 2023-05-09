@@ -1,3 +1,4 @@
+import csv
 import os
 from pathlib import Path
 import discord
@@ -5,15 +6,12 @@ from discord.ext import commands
 import logging
 import requests
 from dotenv import load_dotenv
-from discord import MessageType
-
-from datetime import *
-from slackBotDB import engine,Message
-from sqlalchemy.orm import sessionmaker
 
 load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
 bot = commands.Bot(intents=discord.Intents.all(), proxy='http://127.0.0.1:7890')
+with open('channelPair.csv', 'r') as f:
+    chnDict ={x[0]:x[1] for x in csv.reader(f)}
 
 @bot.event
 async def on_ready():
@@ -28,9 +26,9 @@ async def on_message(message):
         url=attachment.url
         break
     if url:
-        sendSlack(url,message.content,str(message.id),message.type.value)
+        sendSlack(message.channelid, url,message.content,str(message.id),message.type.value)
 
-def sendSlack(url:str,prompt:str,id:str,msgType:int):
+def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
     hash=str(url.split("_")[-1]).split(".")[0]
     headers = {
         'Authorization': 'Bearer ' + os.environ["SLACK_BOT_TOKEN"],
@@ -127,7 +125,7 @@ def sendSlack(url:str,prompt:str,id:str,msgType:int):
                         ]
                     }]
     json_data = {
-        'channel': 'D054Y580GS0',
+        'channel': chnDict[discord_ch],
         "attachments": [
             {
                 "blocks": [
@@ -146,6 +144,4 @@ def sendSlack(url:str,prompt:str,id:str,msgType:int):
     print(response.text)
 
 if __name__ == "__main__":
-    Session = sessionmaker(bind=engine)
-    session = Session()
     bot.run(os.environ["DC_BOT_TOKEN"])

@@ -1,3 +1,4 @@
+import csv
 import logging
 from pathlib import Path
 
@@ -8,16 +9,14 @@ import os,requests
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from datetime import *
-from slackBotDB import engine,Message
-from sqlalchemy.orm import sessionmaker
-
 load_dotenv(dotenv_path=Path('.') / '.env')
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
+with open('channelPair.csv', 'r') as f:
+    chnDict ={x[1]:x[0] for x in csv.reader(f)}
 
-def PassPromptToSelfBot(prompt: str):
+def PassPromptToSelfBot(prompt: str,slack_chn:str):
     payload = {"type": 2, "application_id": "936929561302675456", "guild_id": int(os.environ["MJSEVERID"]),
-               "channel_id": int(os.environ["MJCHANNELID"]), "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
+               "channel_id": int(chnDict[slack_chn]), "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
                "data": {"version": "1077969938624553050", "id": "938956540159881230", "name": "imagine", "type": 1,
                         "options": [{"type": 3, "name": "prompt", "value": prompt}],
                         "application_command": {"id": "938956540159881230",
@@ -75,7 +74,6 @@ def Variation(ack,body):
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
     if response.status_code==204:
-        addMsg(messageId,body['user']['id'],body['channel']['id'],20)
         ack('V%s send'%index)
     return 200
 
@@ -117,16 +115,14 @@ def Upscale(ack,body):
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
     if response.status_code==204:
-        addMsg(messageId,body['user']['id'],body['channel']['id'],19)
         ack('U%s send'%index)
     return 200
 
 @app.command("/imagine")
 def handle_imagine_command(ack, body, command):
-    # df=pd.DataFrame(data=[time_stamp,incoming_text,user,channel],columns=['date','sPrompt','sUserId','sChannel'])
     prompt=body['command']+' '+body['text'].replace('*',' ')
     print(body)
-    response = PassPromptToSelfBot(prompt)
+    response = PassPromptToSelfBot(prompt,body['channel'])
     if response.status_code==204:
         ack(f"Your imagine: {body['text']} is being generated")
     else:
@@ -154,17 +150,9 @@ def Reroll(ack,body):
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
     if response.status_code==204:
-        addMsg(messageId,body['user']['id'],body['channel']['id'],19)
         ack('re-roll send')
     return response
 
-def addMsg(msgid,userid,channelid,prompt,msgType):
-    new_message = Message(msgid=msgid, createTime=datetime.now(), userid=userid, channelid=channelid,
-                          prompt=prompt, msgType=msgType)
-    session.add(new_message)
-    session.commit()
 
 if __name__ == "__main__":
-    Session = sessionmaker(bind=engine)
-    session = Session()
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
