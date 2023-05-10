@@ -1,6 +1,7 @@
 import csv
 import logging
 from pathlib import Path
+from datetime import datetime
 
 from dotenv import load_dotenv
 logging.basicConfig(level=logging.DEBUG)
@@ -12,11 +13,13 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 load_dotenv(dotenv_path=Path('.') / '.env')
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 with open('channelPair.csv', 'r') as f:
-    chnDict ={x[1]:x[0] for x in csv.reader(f)}
+    chnDict ={x[1]:{'dcCh':int(x[0]),'expire':datetime.strptime(x[2], '%Y-%m-%d').date()} for x in csv.reader(f)}
+    print(chnDict)
 
 def PassPromptToSelfBot(prompt: str,slack_chn:str):
+    print(chnDict,slack_chn,chnDict[slack_chn])
     payload = {"type": 2, "application_id": "936929561302675456", "guild_id": int(os.environ["MJSEVERID"]),
-               "channel_id": int(chnDict[slack_chn]), "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
+               "channel_id": chnDict[slack_chn]['dcCh'], "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
                "data": {"version": "1077969938624553050", "id": "938956540159881230", "name": "imagine", "type": 1,
                         "options": [{"type": 3, "name": "prompt", "value": prompt}],
                         "application_command": {"id": "938956540159881230",
@@ -37,8 +40,7 @@ def PassPromptToSelfBot(prompt: str,slack_chn:str):
     }
     response = requests.post("https://discord.com/api/v9/interactions",
                              json=payload, headers=header)
-    print(response.text)
-    return 200
+    return response
 
 @app.action("variation1")
 def variation1(ack,body):
@@ -119,10 +121,12 @@ def Upscale(ack,body):
     return 200
 
 @app.command("/imagine")
-def handle_imagine_command(ack, body, command):
+def handle_imagine_command(ack, body):
+    slack_chn=body['channel_id']
+    if chnDict[slack_chn]['expire']<datetime.now().date():
+        ack(f"{slack_chn}到期")
     prompt=body['command']+' '+body['text'].replace('*',' ')
-    print(body)
-    response = PassPromptToSelfBot(prompt,body['channel'])
+    response = PassPromptToSelfBot(prompt,slack_chn)
     if response.status_code==204:
         ack(f"Your imagine: {body['text']} is being generated")
     else:

@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
 bot = commands.Bot(intents=discord.Intents.all(), proxy='http://127.0.0.1:7890')
 with open('channelPair.csv', 'r') as f:
-    chnDict ={x[0]:x[1] for x in csv.reader(f)}
+    chnDict ={str(x[0]):x[1] for x in csv.reader(f)}
 
 @bot.event
 async def on_ready():
@@ -26,7 +26,7 @@ async def on_message(message):
         url=attachment.url
         break
     if url:
-        sendSlack(message.channelid, url,message.content,str(message.id),message.type.value)
+        sendSlack(message.channel.id, url,message.content,str(message.id),message.type.value)
 
 def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
     hash=str(url.split("_")[-1]).split(".")[0]
@@ -125,7 +125,7 @@ def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
                         ]
                     }]
     json_data = {
-        'channel': chnDict[discord_ch],
+        'channel': chnDict[str(discord_ch)],
         "attachments": [
             {
                 "blocks": [
