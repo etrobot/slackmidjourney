@@ -58,13 +58,18 @@ def variation3(ack,body):
 def variation4(ack,body):
     Variation(ack, body)
 
-def Variation(ack,body):
-    data=body["actions"][0]["value"].split('/')
-    index=data[0]
-    messageId=data[1]
-    messageHash=data[2]
+def Variation(ack, body):
+    slack_chn = body['channel_id']
+    data = body["actions"][0]["value"].split('/')
+    index = data[0]
+    messageId = data[1]
+    messageHash = data[2]
+    if variation(slack_chn,index,messageId,messageHash).status_code==204:
+        ack('V%s send'%body["actions"][0]["value"].split('/')[0])
+
+def variation(slack_chn,index,messageId,messageHash):
     payload = {"type":3, "guild_id":int(os.environ["MJSEVERID"]),
-            "channel_id": int(os.environ["MJCHANNELID"]),
+            "channel_id": chnDict[slack_chn]['dcCh'],
             "message_flags":0,
             "message_id": messageId,
             "application_id": "936929561302675456",
@@ -75,9 +80,7 @@ def Variation(ack,body):
     }
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
-    if response.status_code==204:
-        ack('V%s send'%index)
-    return 200
+    return response
 
 @app.action("upscale1")
 def upscale4(ack,body):
@@ -97,13 +100,18 @@ def upscale4(ack,body):
 
 
 def Upscale(ack,body):
+    slack_chn = body['channel_id']
     data=body["actions"][0]["value"].split('/')
     index=data[0]
     messageId=data[1]
     messageHash=data[2]
+    if upscale(slack_chn,index,messageId,messageHash).status_code==204:
+        ack('U%s send' % index)
+
+def upscale(slack_chn,index,messageId,messageHash):
     payload = {"type":3,
     "guild_id":int(os.environ["MJSEVERID"]),
-    "channel_id":int(os.environ["MJCHANNELID"]),
+    "channel_id":chnDict[slack_chn]['dcCh'],
     "message_flags":0,
     "message_id": messageId,
     "application_id":"936929561302675456",
@@ -116,9 +124,7 @@ def Upscale(ack,body):
     }
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
-    if response.status_code==204:
-        ack('U%s send'%index)
-    return 200
+    return response
 
 @app.command("/imagine")
 def handle_imagine_command(ack, body):
@@ -135,19 +141,24 @@ def handle_imagine_command(ack, body):
 @app.action("reroll")
 def Reroll(ack,body):
     print(body)
+    slack_chn=body['channel']['id']
     data=body["actions"][0]["value"].split('/')
     messageId=data[1]
     messageHash=data[2]
-    payload = {"type":3,
-    "guild_id":int(os.environ["MJSEVERID"]),
-    "channel_id":int(os.environ["MJCHANNELID"]),
-    "message_flags":0,
-    "message_id": messageId,
-    "application_id":"936929561302675456",
-    "session_id":"45bc04dd4da37141a5f73dfbfaf5bdcf",
-    "data":{"component_type":2,
-            "custom_id":"J::JOB::reroll::0::%s::SOLO"%messageHash}
-        }
+    payload={
+        'type': 3,
+        'nonce': '1102619377825480704',
+        'guild_id': int(os.environ["MJSEVERID"]),
+        'channel_id': chnDict[slack_chn]['dcCh'],
+        'message_flags': 0,
+        'message_id': messageId,
+        'application_id': '936929561302675456',
+        'session_id': '24de03cb9d9a886b717a4294daa6a8db',
+        'data': {
+            'component_type': 2,
+            'custom_id': 'MJ::JOB::reroll::0::%s::SOLO'%messageHash,
+        },
+    }
     header = {
         'authorization' : os.environ["DCTOKEN"]
     }

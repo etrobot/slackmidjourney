@@ -6,6 +6,7 @@ from discord.ext import commands
 import logging
 import requests
 from dotenv import load_dotenv
+from slackBot import upscale
 
 load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
@@ -25,6 +26,11 @@ async def on_message(message):
     for attachment in message.attachments:
         url=attachment.url
         break
+    if url and message.channel.id==1106231221903691827:
+        if 'image #' in message.content:
+           return url
+        else:
+            upscale(1106231221903691827,1,message.channel.id,str(url.split("_")[-1]).split(".")[0])
     if url:
         sendSlack(message.channel.id, url,message.content,str(message.id),message.type.value)
 
