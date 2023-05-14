@@ -6,7 +6,6 @@ from discord.ext import commands
 import logging
 import requests
 from dotenv import load_dotenv
-from slackBot import upscale
 
 load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
@@ -26,12 +25,12 @@ async def on_message(message):
     for attachment in message.attachments:
         url=attachment.url
         break
-    if url and message.channel.id==1106231221903691827:
-        if 'image #' in message.content:
-           return url
-        else:
-            upscale(1106231221903691827,1,message.channel.id,str(url.split("_")[-1]).split(".")[0])
     if url:
+        if message.channel.id==int(os.environ["MJCHNSAVE"]):
+            print(message.content)
+            with open('midjourney.csv', mode='a') as file:
+                file.write('\n"%s","%s"'%(message.content.replace(' (fast)','')[len('**'):-len('** - <@741943668075790357>')].strip(),str(url.split("_")[-1]).split(".")[0]))
+            return
         sendSlack(message.channel.id, url,message.content,str(message.id),message.type.value)
 
 def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):

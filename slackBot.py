@@ -10,16 +10,16 @@ import os,requests
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-load_dotenv(dotenv_path=Path('.') / '.env')
+load_dotenv(dotenv_path='.env')
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
-with open('channelPair.csv', 'r') as f:
-    chnDict ={x[1]:{'dcCh':int(x[0]),'expire':datetime.strptime(x[2], '%Y-%m-%d').date()} for x in csv.reader(f)}
-    print(chnDict)
 
-def PassPromptToSelfBot(prompt: str,slack_chn:str):
-    print(chnDict,slack_chn,chnDict[slack_chn])
+def PassPromptToSelfBot(prompt: str,slack_chn:str=None):
+    if slack_chn is None:
+        dcChannel=1106231221903691827
+    else:
+        dcChannel = chnDict[slack_chn]['dcCh']
     payload = {"type": 2, "application_id": "936929561302675456", "guild_id": int(os.environ["MJSEVERID"]),
-               "channel_id": chnDict[slack_chn]['dcCh'], "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
+               "channel_id":dcChannel, "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
                "data": {"version": "1077969938624553050", "id": "938956540159881230", "name": "imagine", "type": 1,
                         "options": [{"type": 3, "name": "prompt", "value": prompt}],
                         "application_command": {"id": "938956540159881230",
@@ -64,7 +64,7 @@ def Variation(ack, body):
     index = data[0]
     messageId = data[1]
     messageHash = data[2]
-    if variation(slack_chn,index,messageId,messageHash).status_code==204:
+    if variation(slack_chn,index,messageId,messageHash).status_code==200:
         ack('V%s send'%body["actions"][0]["value"].split('/')[0])
 
 def variation(slack_chn,index,messageId,messageHash):
@@ -105,7 +105,7 @@ def Upscale(ack,body):
     index=data[0]
     messageId=data[1]
     messageHash=data[2]
-    if upscale(slack_chn,index,messageId,messageHash).status_code==204:
+    if upscale(slack_chn,index,messageId,messageHash).status_code==200:
         ack('U%s send' % index)
 
 def upscale(slack_chn,index,messageId,messageHash):
@@ -170,4 +170,8 @@ def Reroll(ack,body):
 
 
 if __name__ == "__main__":
+    with open('channelPair.csv', 'r') as f:
+        chnDict = {x[1]: {'dcCh': int(x[0]), 'expire': datetime.strptime(x[2], '%Y-%m-%d').date()} for x in
+                   csv.reader(f)}
+        print(chnDict)
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
