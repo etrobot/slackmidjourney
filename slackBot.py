@@ -1,23 +1,24 @@
 import csv
 import logging
-from pathlib import Path
 from datetime import datetime
 
-from dotenv import load_dotenv
 logging.basicConfig(level=logging.DEBUG)
-import os,requests
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+from vika import *
+
 load_dotenv(dotenv_path='.env')
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
+
+
 def PassPromptToSelfBot(prompt: str,slack_chn:str=None):
     if slack_chn is None:
-        dcChannel=1106231221903691827
+        dcChannel=os.environ['MJCHNSAVE']
     else:
-        dcChannel = chnDict[slack_chn]['dcCh']
+        dcChannel = vikaMjDf('SL').at[slack_chn,'DC']
     payload = {"type": 2, "application_id": "936929561302675456", "guild_id": int(os.environ["MJSEVERID"]),
                "channel_id":dcChannel, "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
                "data": {"version": "1077969938624553050", "id": "938956540159881230", "name": "imagine", "type": 1,
@@ -69,14 +70,14 @@ def Variation(ack, body):
 
 def variation(slack_chn,index,messageId,messageHash):
     payload = {"type":3, "guild_id":int(os.environ["MJSEVERID"]),
-            "channel_id": chnDict[slack_chn]['dcCh'],
+            "channel_id": vikaMjDf('SL').at[slack_chn,'DC'],
             "message_flags":0,
             "message_id": messageId,
             "application_id": "936929561302675456",
             "session_id":"1f3dbdf09efdf93d81a3a6420882c92c",
             "data":{"component_type":2,"custom_id":"MJ::JOB::variation::{}::{}".format(index, messageHash)}}
     header = {
-        'authorization' :os.environ["DCTOKEN"]
+        'authorization' :vikaData('recNIX08aLFPB')
     }
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
@@ -111,7 +112,7 @@ def Upscale(ack,body):
 def upscale(slack_chn,index,messageId,messageHash):
     payload = {"type":3,
     "guild_id":int(os.environ["MJSEVERID"]),
-    "channel_id":chnDict[slack_chn]['dcCh'],
+    "channel_id":vikaMjDf('SL').at[slack_chn,'DC'],
     "message_flags":0,
     "message_id": messageId,
     "application_id":"936929561302675456",
@@ -120,7 +121,7 @@ def upscale(slack_chn,index,messageId,messageHash):
             "custom_id":"MJ::JOB::upsample::{}::{}".format(index, messageHash)}
         }
     header = {
-        'authorization' : os.environ["DCTOKEN"]
+        'authorization' : vikaData('recNIX08aLFPB')
     }
     response = requests.post("https://discord.com/api/v9/interactions",
     json = payload, headers = header)
@@ -129,7 +130,7 @@ def upscale(slack_chn,index,messageId,messageHash):
 @app.command("/imagine")
 def handle_imagine_command(ack, body):
     slack_chn=body['channel_id']
-    if chnDict[slack_chn]['expire']<datetime.now().date():
+    if vikaMjDf('SL').at[slack_chn,'EXP']<datetime.now().date():
         ack(f"{slack_chn}到期")
     prompt=body['command']+' '+body['text'].replace('*',' ')
     response = PassPromptToSelfBot(prompt,slack_chn)
@@ -149,7 +150,7 @@ def Reroll(ack,body):
         'type': 3,
         'nonce': '1102619377825480704',
         'guild_id': int(os.environ["MJSEVERID"]),
-        'channel_id': chnDict[slack_chn]['dcCh'],
+        'channel_id': vikaMjDf('SL').at[slack_chn,'DC'],
         'message_flags': 0,
         'message_id': messageId,
         'application_id': '936929561302675456',
@@ -170,8 +171,4 @@ def Reroll(ack,body):
 
 
 if __name__ == "__main__":
-    with open('channelPair.csv', 'r') as f:
-        chnDict = {x[1]: {'dcCh': int(x[0]), 'expire': datetime.strptime(x[2], '%Y-%m-%d').date()} for x in
-                   csv.reader(f)}
-        print(chnDict)
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()

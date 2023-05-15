@@ -1,17 +1,15 @@
 import csv
-import os
 from pathlib import Path
 import discord
 from discord.ext import commands
 import logging
-import requests
-from dotenv import load_dotenv
+
+from vika import *
+
 
 load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
 bot = commands.Bot(intents=discord.Intents.all(), proxy='http://127.0.0.1:7890')
-with open('channelPair.csv', 'r') as f:
-    chnDict ={str(x[0]):x[1] for x in csv.reader(f)}
 
 @bot.event
 async def on_ready():
@@ -130,7 +128,7 @@ def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
                         ]
                     }]
     json_data = {
-        'channel': chnDict[str(discord_ch)],
+        'channel': vikaMjDf('DC').at[discord_ch,'SL'],
         "attachments": [
             {
                 "blocks": [
