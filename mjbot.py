@@ -18,20 +18,21 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    print(message)
     url=None
     for attachment in message.attachments:
         url=attachment.url
         break
+    print(message.channel.id, url,message.content,str(message.id))
     if url:
         if message.channel.id==int(os.environ["MJCHNSAVE"]):
             print(message.content)
             with open('midjourney.csv', mode='a') as file:
                 file.write('\n"%s","%s"'%(message.content.replace(' (fast)','')[len('**'):-len('** - <@741943668075790357>')].strip(),str(url.split("_")[-1]).split(".")[0]))
             return
-        sendSlack(message.channel.id, url,message.content,str(message.id),message.type.value)
+        sendSlack(message.channel.id, url,message.content,str(message.id))
 
-def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
+def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
+    discord_ch=str(discord_ch)
     hash=str(url.split("_")[-1]).split(".")[0]
     headers = {
         'Authorization': 'Bearer ' + os.environ["SLACK_BOT_TOKEN"],
@@ -128,7 +129,7 @@ def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
                         ]
                     }]
     json_data = {
-        'channel': vikaMjDf('DC').at[discord_ch,'SL'],
+        'channel': chnlDf.at[discord_ch,'SL'],
         "attachments": [
             {
                 "blocks": [
@@ -147,4 +148,5 @@ def sendSlack(discord_ch,url:str,prompt:str,id:str,msgType:int):
     print(response.text)
 
 if __name__ == "__main__":
+    chnlDf=vikaMjDf('DC')
     bot.run(os.environ["DC_BOT_TOKEN"])
