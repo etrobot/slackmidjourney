@@ -11,7 +11,7 @@ from vika import *
 
 load_dotenv(dotenv_path='.env')
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
-
+PROXY={'https':'http://127.0.0.1:7890'}
 
 
 def PassPromptToSelfBot(prompt: str,slack_chn:str=None):
@@ -42,7 +42,7 @@ def PassPromptToSelfBot(prompt: str,slack_chn:str=None):
         'authorization': dcToken
     }
     response = requests.post("https://discord.com/api/v9/interactions",
-                             json=payload, headers=header)
+                             json=payload, headers=header,proxies=PROXY)
     return response
 
 @app.action("variation1")
@@ -62,39 +62,39 @@ def variation4(ack,body):
     Variation(ack, body)
 
 def Variation(ack, body):
-    slack_chn = body['channel_id']
+    slack_chn = body['channel']['id']
     data = body["actions"][0]["value"].split('/')
     index = data[0]
     messageId = data[1]
     messageHash = data[2]
-    if variation(slack_chn,index,messageId,messageHash).status_code==200:
-        ack('V%s send'%body["actions"][0]["value"].split('/')[0])
+    if variation(slack_chn,index,messageId,messageHash).status_code==204:
+        ack(f'V%s send'%body["actions"][0]["value"].split('/')[0])
 
 def variation(slack_chn,index,messageId,messageHash):
-    payload = {"type":3, "guild_id":int(os.environ["MJSEVERID"]),
-            "channel_id": chnlDf.at[slack_chn,'DC'],
-            "message_flags":0,
-            "message_id": messageId,
-            "application_id": "936929561302675456",
-            "session_id":"1f3dbdf09efdf93d81a3a6420882c92c",
-            "data":{"component_type":2,"custom_id":"MJ::JOB::variation::{}::{}".format(index, messageHash)}}
+    payload = {"type": 3, "guild_id": int(os.environ["MJSEVERID"]),
+               "channel_id": chnlDf.at[slack_chn,'DC'],
+               "message_flags": 0,
+               "message_id": messageId,
+               "application_id": "936929561302675456",
+               "session_id": "1f3dbdf09efdf93d81a3a6420882c92c",
+               "data": {"component_type": 2, "custom_id": "MJ::JOB::variation::{}::{}".format(index, messageHash)}}
     header = {
         'authorization' :vikaData('recNIX08aLFPB')
     }
     response = requests.post("https://discord.com/api/v9/interactions",
-    json = payload, headers = header)
+    json = payload, headers = header,proxies=PROXY)
     return response
 
 @app.action("upscale1")
-def upscale4(ack,body):
+def upscale1(ack,body):
     Upscale(ack,body)
 
 @app.action("upscale2")
-def upscale4(ack,body):
+def upscale2(ack,body):
     Upscale(ack,body)
 
 @app.action("upscale3")
-def upscale4(ack,body):
+def upscale3(ack,body):
     Upscale(ack,body)
 
 @app.action("upscale4")
@@ -103,13 +103,14 @@ def upscale4(ack,body):
 
 
 def Upscale(ack,body):
-    slack_chn = body['channel_id']
+    print(body)
+    slack_chn = body['channel']['id']
     data=body["actions"][0]["value"].split('/')
     index=data[0]
     messageId=data[1]
     messageHash=data[2]
-    if upscale(slack_chn,index,messageId,messageHash).status_code==200:
-        ack('U%s send' % index)
+    if upscale(slack_chn,index,messageId,messageHash).status_code==204:
+        ack(f'U%s send' % index)
 
 def upscale(slack_chn,index,messageId,messageHash):
     payload = {"type":3,
@@ -126,12 +127,12 @@ def upscale(slack_chn,index,messageId,messageHash):
         'authorization' : vikaData('recNIX08aLFPB')
     }
     response = requests.post("https://discord.com/api/v9/interactions",
-    json = payload, headers = header)
+    json = payload, headers = header,proxies=PROXY)
     return response
 
 @app.command("/imagine")
 def handle_imagine_command(ack, body):
-    slack_chn=body['channel_id']
+    slack_chn = body['channel_id']
     if chnlDf.at[slack_chn,'EXP']<datetime.now().date():
         ack(f"{slack_chn}到期")
     prompt=body['command']+' '+body['text'].replace('*',' ')
@@ -145,7 +146,6 @@ def handle_imagine_command(ack, body):
 
 @app.action("reroll")
 def Reroll(ack,body):
-    print(body)
     slack_chn=body['channel']['id']
     data=body["actions"][0]["value"].split('/')
     messageId=data[1]
@@ -165,9 +165,9 @@ def Reroll(ack,body):
         },
     }
     header = {
-        'authorization' : os.environ["DCTOKEN"]
+        'authorization' : dcToken
     }
-    response = requests.post("https://discord.com/api/v9/interactions",json = payload, headers = header)
+    response = requests.post("https://discord.com/api/v9/interactions",json = payload, headers = header,proxies=PROXY)
     if response.status_code==204:
         ack('re-roll send')
     return response

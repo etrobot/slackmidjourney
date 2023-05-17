@@ -6,10 +6,10 @@ import logging
 
 from vika import *
 
-
+PROXY='http://127.0.0.1:7890'
 load_dotenv(dotenv_path=Path('.') / '.env')
 #discord Bot
-bot = commands.Bot(intents=discord.Intents.all(), proxy='http://127.0.0.1:7890')
+bot = commands.Bot(intents=discord.Intents.all(), proxy=PROXY)
 
 @bot.event
 async def on_ready():
@@ -22,7 +22,7 @@ async def on_message(message):
     for attachment in message.attachments:
         url=attachment.url
         break
-    print(message.channel.id, url,message.content,str(message.id))
+    print(message.channel.id, url,message.content,str(message.id),message)
     if url:
         if message.channel.id==int(os.environ["MJCHNSAVE"]):
             print(message.content)
@@ -34,6 +34,9 @@ async def on_message(message):
 def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
     discord_ch=str(discord_ch)
     hash=str(url.split("_")[-1]).split(".")[0]
+    imgUrl='https://cdn.midjourney.com/%s/grid_0.webp'%hash
+    if 'Image #' in prompt:
+        imgUrl=url
     headers = {
         'Authorization': 'Bearer ' + os.environ["SLACK_BOT_TOKEN"],
     }
@@ -135,7 +138,7 @@ def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
                 "blocks": [
                     {
                         "type": "image",
-                        "image_url":url,
+                        "image_url":imgUrl,
                         "alt_text":prompt
                     }
                 ]
