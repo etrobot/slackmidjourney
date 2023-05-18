@@ -27,7 +27,9 @@ async def on_message(message):
         if message.channel.id==int(os.environ["MJCHNSAVE"]):
             print(message.content)
             with open('midjourney.csv', mode='a') as file:
-                file.write('\n"%s","%s"'%(message.content.replace(' (fast)','').split('**')[1].strip(),str(url.split("_")[-1]).split(".")[0]))
+                hash=str(url.split("_")[-1]).split(".")[0]
+                url='https://cdn.midjourney.com/%s/0_'%hash
+                file.write('\n"%s",%s,%s'%(message.content.replace(' (fast)','').split('**')[1].strip(),hash,url))
             return
         sendSlack(message.channel.id, url,message.content,str(message.id))
 
