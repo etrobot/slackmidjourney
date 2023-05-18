@@ -17,10 +17,10 @@ PROXY={'https':'http://127.0.0.1:7890'}
 def PassPromptToSelfBot(prompt: str,slack_chn:str=None):
     if slack_chn is None:
         dcChannel=os.environ['MJCHNSAVE']
-    elif slack_chn in chnlDf.index:
-        dcChannel = chnlDf.at[slack_chn,'DC']
+    elif slack_chn in chnlDf['SL'].values:
+        dcChannel = chnlDf.loc[chnlDf['SL']==slack_chn,'DC'].values[0]
     else:
-        return slack_chn
+        return 500
     payload = {"type": 2, "application_id": "936929561302675456", "guild_id": int(os.environ["MJSEVERID"]),
                "channel_id":dcChannel, "session_id": "2fb980f65e5c9a77c96ca01f2c242cf6",
                "data": {"version": "1077969938624553050", "id": "938956540159881230", "name": "imagine", "type": 1,
@@ -72,7 +72,7 @@ def Variation(ack, body):
 
 def variation(slack_chn,index,messageId,messageHash):
     payload = {"type": 3, "guild_id": int(os.environ["MJSEVERID"]),
-               "channel_id": chnlDf.at[slack_chn,'DC'],
+               "channel_id": chnlDf.loc[chnlDf['SL']==slack_chn,'DC'].values[0],
                "message_flags": 0,
                "message_id": messageId,
                "application_id": "936929561302675456",
@@ -115,7 +115,7 @@ def Upscale(ack,body):
 def upscale(slack_chn,index,messageId,messageHash):
     payload = {"type":3,
     "guild_id":int(os.environ["MJSEVERID"]),
-    "channel_id":chnlDf.at[slack_chn,'DC'],
+    "channel_id":chnlDf.loc[chnlDf['SL']==slack_chn,'DC'].values[0],
     "message_flags":0,
     "message_id": messageId,
     "application_id":"936929561302675456",
@@ -133,16 +133,38 @@ def upscale(slack_chn,index,messageId,messageHash):
 @app.command("/imagine")
 def handle_imagine_command(ack, body):
     slack_chn = body['channel_id']
-    if chnlDf.at[slack_chn,'EXP']<datetime.now().date():
+    if slack_chn not in chnlDf['SL'].values:
+        ack(f"未知账号: {body['channel_id']} ，请用/register命令发送注册码进行注册")
+        return
+    if chnlDf.loc[chnlDf['SL']==slack_chn,'EXP'].values[0]<datetime.now().date():
         ack(f"{slack_chn}到期")
+        return
     prompt=body['command']+' '+body['text'].replace('*',' ')
     response = PassPromptToSelfBot(prompt,slack_chn)
-    if response==slack_chn:
-        ack(f"未知账号: {body['channel_id']} ，请联系管理员")
-    elif response.status_code==204:
+    if response.status_code==204:
         ack(f"Your imagine: {body['text']} is being generated")
     else:
         ack(f"Failed: {body['text']}")
+
+
+@app.command("/register")
+def handle_register_command(ack, body):
+    slack_chn = body['channel_id']
+    data = body['text']
+    if data in chnlDf['User'].values:
+        dfSlChn = chnlDf.loc[chnlDf['User'] == data, 'SL'].values[0]
+        if dfSlChn==slack_chn:
+            ack(f"{data}已注册！")
+        else:
+            try:
+                chnlDf.loc[chnlDf['User'] == data, 'SL'] = slack_chn
+                register(chnlDf.loc[chnlDf['User'] == data, 'recordId'],slack_chn)
+                ack(f"注册成功: {data}")
+            except:
+                ack(f"注册失败({data}),请联系管理员")
+    else:
+        ack(f"注册码 {data} 不存在")
+
 
 @app.action("reroll")
 def Reroll(ack,body):
@@ -154,7 +176,7 @@ def Reroll(ack,body):
         'type': 3,
         'nonce': '1102619377825480704',
         'guild_id': int(os.environ["MJSEVERID"]),
-        'channel_id': chnlDf.at[slack_chn,'DC'],
+        'channel_id': chnlDf.loc[chnlDf['SL']==slack_chn,'DC'].values[0],
         'message_flags': 0,
         'message_id': messageId,
         'application_id': '936929561302675456',
@@ -169,11 +191,11 @@ def Reroll(ack,body):
     }
     response = requests.post("https://discord.com/api/v9/interactions",json = payload, headers = header,proxies=PROXY)
     if response.status_code==204:
-        ack('re-roll send')
+        ack(f're-roll send')
     return response
 
 
 if __name__ == "__main__":
-    chnlDf = vikaMjDf('SL')
+    chnlDf = vikaMjDf()
     dcToken =  vikaData('recNIX08aLFPB')
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()

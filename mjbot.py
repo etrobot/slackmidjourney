@@ -24,21 +24,18 @@ async def on_message(message):
         break
     print(message.channel.id, url,message.content,str(message.id),message)
     if url:
-        if message.channel.id==int(os.environ["MJCHNSAVE"]):
-            print(message.content)
-            with open('midjourney.csv', mode='a') as file:
-                hash=str(url.split("_")[-1]).split(".")[0]
-                url='https://cdn.midjourney.com/%s/0_'%hash
-                file.write('\n"%s",%s,%s'%(message.content.replace(' (fast)','').split('**')[1].strip(),hash,url))
-            return
-        sendSlack(message.channel.id, url,message.content,str(message.id))
+        hash = str(url.split("_")[-1]).split(".")[0]
+        with open('midjourney.csv', mode='a') as file:
+            file.write('\n%s, "%s", %s, %s'%(message.channel.id,message.content.replace(' (fast)','').split('**')[1].strip(),hash,'https://cdn.midjourney.com/%s/0_' % hash))
+        if message.channel.id != int(os.environ["MJCHNSAVE"]):
+            sendSlack(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0], url,message.content,str(message.id))
 
-def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
-    discord_ch=str(discord_ch)
+def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
     hash=str(url.split("_")[-1]).split(".")[0]
-    imgUrl='https://cdn.midjourney.com/%s/grid_0.webp'%hash
-    if 'Image #' in prompt:
-        imgUrl=url
+    imgUrl = url
+    if 'Image #' not in prompt:
+        imgUrl='https://cdn.midjourney.com/%s/grid_0.webp'%hash
+        print(imgUrl)
     headers = {
         'Authorization': 'Bearer ' + os.environ["SLACK_BOT_TOKEN"],
     }
@@ -134,7 +131,7 @@ def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
                         ]
                     }]
     json_data = {
-        'channel': chnlDf.at[discord_ch,'SL'],
+        'channel': slack_ch,
         "attachments": [
             {
                 "blocks": [
@@ -153,5 +150,5 @@ def sendSlack(discord_ch:str,url:str,prompt:str,id:str):
     print(response.text)
 
 if __name__ == "__main__":
-    chnlDf=vikaMjDf('DC')
+    chnlDf=vikaMjDf()
     bot.run(os.environ["DC_BOT_TOKEN"])

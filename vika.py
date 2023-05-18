@@ -17,7 +17,7 @@ def vikaData(id:str):
     print(vikajson)
     return [x['fields']['value'] for x in vikajson['data']['records'] if x['recordId'] == id][0]
 
-def vikaMjDf(indexCol):
+def vikaMjDf():
     headers = {
         'Authorization': 'Bearer %s'%os.environ['VIKA'],
     }
@@ -29,7 +29,41 @@ def vikaMjDf(indexCol):
                             headers=headers)
     result = response.json()
     # print(result)
-    df = pd.DataFrame(v['fields'] for v in result['data']['records'])
+    df = pd.json_normalize(result['data']['records'])
+    df.drop(columns=['createdAt', 'updatedAt'],inplace=True)
+    df.columns=[x.replace('fields.','') for x in df.columns]
     df['EXP']=pd.to_datetime(df['EXP'],unit='ms').dt.date
-    df.set_index(indexCol,inplace=True)
+    print(df)
     return df
+
+def register(recordId,slack_chn):
+    headers = {
+        'Authorization': 'Bearer %s'%os.environ['VIKA'],
+    }
+
+    params = {
+        'viewId': 'viwr9fdY8TYtN',
+        'fieldKey': 'name',
+    }
+
+    json_data = {
+        'records': [
+            {
+                'recordId': recordId,
+                'fields': {
+                    'SL': slack_chn,
+                    'EXP': 1686153600000,
+                }
+            }
+        ],
+        'fieldKey': 'name',
+    }
+
+    response = requests.patch(
+        'https://api.vika.cn/fusion/v1/datasheets/dstiNYM27aCVoaMP4b/records',
+        params=params,
+        headers=headers,
+        json=json_data,
+    )
+
+    return response
