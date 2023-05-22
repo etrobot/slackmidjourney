@@ -31,8 +31,7 @@ async def on_message(message):
         with open('midjourney.csv', mode='a') as file:
             file.write('\n%s, "%s", %s, %s'%(message.channel.id,message.content.replace(' (fast)','').split('**')[1].strip(),hash,'https://cdn.midjourney.com/%s/0_' % hash))
         if message.channel.id != int(os.environ["MJCHNSAVE"]):
-            df=pd.read_csv('users.csv')
-            if np.isnan(chnlDf.loc[df['DC']==str(message.channel.id),'SL'].values[0]):
+            if pd.isnull(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0]):
                 chnlDf=vikaMjDf()
             sendSlack(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0], url,message.content,str(message.id))
 

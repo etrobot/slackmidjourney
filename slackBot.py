@@ -159,7 +159,7 @@ def handle_register_command(ack, body):
         else:
             try:
                 chnlDf.loc[chnlDf['User'] == data, 'SL'] = slack_chn
-                register(chnlDf.loc[chnlDf['User'] == data, 'recordId'],slack_chn)
+                register(chnlDf.loc[chnlDf['User'] == data, 'recordId'].values[0],slack_chn)
                 ack(f"注册成功: {data}")
             except:
                 ack(f"注册失败({data}),请联系管理员")
