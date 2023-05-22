@@ -153,6 +153,7 @@ def handle_register_command(ack, body):
     data = body['text']
     if data in chnlDf['User'].values:
         dfSlChn = chnlDf.loc[chnlDf['User'] == data, 'SL'].values[0]
+        print('dfSlChn:%s,slack_chn:%s'%(dfSlChn,slack_chn))
         if dfSlChn==slack_chn:
             ack(f"{data}已注册！")
         else:
