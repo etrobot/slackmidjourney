@@ -29,7 +29,7 @@ async def on_message(message):
     if url:
         hash = str(url.split("_")[-1]).split(".")[0]
         with open('midjourney.csv', mode='a') as file:
-            file.write('\n%s, "%s", %s, %s'%(message.channel.id,message.content.replace(' (fast)','').split('**')[1].strip(),hash,'https://cdn.midjourney.com/%s/0_' % hash))
+            file.write('\n%s, "%s", %s, %s'%(message.content.replace(' (fast)','').split('**')[1].strip(),message.channel.id,hash,'https://cdn.midjourney.com/%s/0_' % hash))
         if message.channel.id != int(os.environ["MJCHNSAVE"]):
             if pd.isnull(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0]):
                 chnlDf=vikaMjDf()
