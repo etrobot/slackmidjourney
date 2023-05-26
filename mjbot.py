@@ -33,9 +33,9 @@ async def on_message(message):
         if message.channel.id != int(os.environ["MJCHNSAVE"]):
             if pd.isnull(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0]):
                 chnlDf=vikaMjDf()
-            sendSlack(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0], url,message.content,str(message.id))
+            sendSlack(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0], url,message.content,str(message.id),message.author.name)
 
-def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
+def sendSlack(slack_ch:str,url:str,prompt:str,id:str,serviceName:str):
     hash=str(url.split("_")[-1]).split(".")[0]
     imgUrl = url
     if 'Image #' not in prompt:
@@ -53,7 +53,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "U1"
                                 },
-                                "value": '/'.join(["1",id,hash]),
+                                "value": '/'.join(["1",id,hash,serviceName]),
                                 "action_id": "upscale1"
                             },
                             {
@@ -62,7 +62,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "U2"
                                 },
-                                "value": '/'.join(["2",id,hash]),
+                                "value": '/'.join(["2",id,hash,serviceName]),
                                 "action_id": "upscale2"
                             },
                             {
@@ -71,7 +71,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "U3"
                                 },
-                                "value": '/'.join(["3",id,hash]),
+                                "value": '/'.join(["3",id,hash,serviceName]),
                                 "action_id": "upscale3"
                             },
                             {
@@ -80,7 +80,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "U4"
                                 },
-                                "value": '/'.join(["4",id,hash]),
+                                "value": '/'.join(["4",id,hash,serviceName]),
                                 "action_id": "upscale4"
                             },
                             {
@@ -103,7 +103,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "V1"
                                 },
-                                "value": '/'.join(["1",id,hash]),
+                                "value": '/'.join(["1",id,hash,serviceName]),
                                 "action_id": "variation1"
                             },
                             {
@@ -112,7 +112,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "V2"
                                 },
-                                "value": '/'.join(["2",id,hash]),
+                                "value": '/'.join(["2",id,hash,serviceName]),
                                 "action_id": "variation2"
                             },
                             {
@@ -121,7 +121,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "V3"
                                 },
-                                "value": '/'.join(["3",id,hash]),
+                                "value": '/'.join(["3",id,hash,serviceName]),
                                 "action_id": "variation3"
                             },
                             {
@@ -130,7 +130,7 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str):
                                     "type": "plain_text",
                                     "text": "V4"
                                 },
-                                "value": '/'.join(["4",id,hash]),
+                                "value": '/'.join(["4",id,hash,serviceName]),
                                 "action_id": "variation4"
                             }
                         ]
