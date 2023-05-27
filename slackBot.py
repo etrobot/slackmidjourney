@@ -157,7 +157,7 @@ def handle_imagine_command(ack, body):
         ack(f"未知账号: {body['channel_id']} ，请用/register命令发送注册码进行注册")
         return
     if chnlDf.loc[chnlDf['SL'] == slack_chn, 'EXP'].values[0] < datetime.now().date():
-        ack(f"{slack_chn}的MJ到期，启用BlueWillow生成%s"%prompt)
+        ack(f"{slack_chn}的MJ到期"%prompt)
         return
     response = post2DCMJ(prompt, slack_chn)
     if response.status_code == 204:
