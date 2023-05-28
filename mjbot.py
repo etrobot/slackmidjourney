@@ -28,12 +28,16 @@ async def on_message(message):
     print(message.channel.id, url,message.content,str(message.id),message)
     if url:
         hash = str(url.split("_")[-1]).split(".")[0]
-        with open('midjourney.csv', mode='a') as file:
-            file.write('\n%s, "%s", %s, %s'%(message.content.replace(' (fast)','').split('**')[1].strip(),message.channel.id,hash,'https://cdn.midjourney.com/%s/0_' % hash))
+        with open('midjourney_backup.csv', mode='a') as file:
+            file.write('\n"%s", %s, %s, %s'%(message.content.replace(' (fast)','').split('**')[1].strip(),message.channel.id,hash,'https://cdn.midjourney.com/%s/0_' % hash))
         if message.channel.id != int(os.environ["MJCHNSAVE"]):
             if pd.isnull(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0]):
                 chnlDf=vikaMjDf()
             sendSlack(chnlDf.loc[chnlDf['DC']==str(message.channel.id),'SL'].values[0], url,message.content,str(message.id),message.author.name)
+        else:
+            with open('midjourney.csv', mode='a') as file:
+                file.write('\n"%s", %s, %s' % (
+                message.content.replace(' (fast)', '').split('**')[1].strip(), hash,'https://cdn.midjourney.com/%s/0_' % hash))
 
 def sendSlack(slack_ch:str,url:str,prompt:str,id:str,serviceName:str):
     hash=str(url.split("_")[-1]).split(".")[0]
