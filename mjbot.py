@@ -145,6 +145,13 @@ def sendSlack(slack_ch:str,url:str,prompt:str,id:str,serviceName:str):
             {
                 "blocks": [
                     {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": prompt
+                        }
+                    },
+                    {
                         "type": "image",
                         "image_url":imgUrl,
                         "alt_text":prompt
